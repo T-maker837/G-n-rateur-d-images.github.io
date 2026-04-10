@@ -31,35 +31,44 @@
 </div>
 
 <script>
-    function generer() {
-        const text = document.getElementById('prompt').value;
-        const img = document.getElementById('output');
-        const loader = document.getElementById('loader');
+    async function generer() {
+    const text = document.getElementById('prompt').value;
+    const img = document.getElementById('output');
+    const loader = document.getElementById('loader');
 
-        if (!text) return alert("Écris quelque chose !");
+    if (!text) return alert("Écris quelque chose !");
 
-        // Afficher le chargement
-        loader.style.display = "block";
-        img.style.display = "none";
+    loader.style.display = "block";
+    img.style.display = "none";
 
-        // On utilise un seed aléatoire pour avoir une image différente à chaque fois
-        const randomSeed = Math.floor(Math.random() * 99999);
-        
-        // URL de l'API gratuite (Pollinations.ai)
-        const url = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&seed=${randomSeed}&nologo=true`;
+    // On crée un nombre aléatoire pour éviter le cache du navigateur
+    const randomSeed = Math.floor(Math.random() * 1000000);
+    
+    // On utilise le modèle 'flux' qui est très performant en 2026
+    const url = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&seed=${randomSeed}&model=flux&nologo=true`;
 
-        img.src = url;
-
+    // Au lieu de mettre juste img.src, on va vérifier si l'image existe vraiment
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            img.src = url;
+            img.onload = () => {
+                loader.style.display = "none";
+                img.style.display = "block";
+            };
+        } else {
+            throw new Error("Serveur occupé");
+        }
+    } catch (error) {
+        // Si ça échoue, on tente une alternative plus légère
+        console.log("Tentative sur serveur secondaire...");
+        img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?seed=${randomSeed}`;
         img.onload = () => {
             loader.style.display = "none";
             img.style.display = "block";
         };
-        
-        img.onerror = () => {
-            alert("Erreur lors de la génération. Réessaie !");
-            loader.style.display = "none";
-        };
     }
+}
 </script>
 
 </body>
